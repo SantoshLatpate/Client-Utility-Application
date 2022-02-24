@@ -34,8 +34,8 @@ var fs = require('fs');
 
 try{
     // Taking data from file and add that in collection
-    fs.readFile(testDataBaseLocation+'/uniquInputIds.txt', testDataFileFormat, function(err, data) {    // For unique data testing
-    //fs.readFile(testDataBaseLocation+'/inputIds.txt', testDataFileFormat, function(err, data) {       // For duplicate data testing
+    //fs.readFile(testDataBaseLocation+'/uniquInputIds.txt', testDataFileFormat, function(err, data) {    // For unique data testing
+    fs.readFile(testDataBaseLocation+'/inputIds.txt', testDataFileFormat, function(err, data) {       // For duplicate data testing
         if (err) throw err;
         ids = data.toString().split(/\r?\n/)
     });
