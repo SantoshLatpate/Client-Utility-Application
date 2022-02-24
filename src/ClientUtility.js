@@ -32,12 +32,17 @@ var ids = [ 'cRF2dvDZQsmu37WGgK6MTcL7XjH'];   // Default one value in the id lis
 // using fs to get data from txt file for bulk request check
 var fs = require('fs');
 
+try{
 // Taking data from file and add that in collection
 //fs.readFile(testDataBaseLocation+'/uniquInputIds.txt', testDataFileFormat, function(err, data) {    // For unique data testing
-fs.readFile(testDataBaseLocation+'/inputIds.txt', testDataFileFormat, function(err, data) {       // For duplicate data testing
-    if (err) throw err;
-    ids = data.toString().split(/\r?\n/)
-});
+    fs.readFile(testDataBaseLocation+'/inputIds.txt', testDataFileFormat, function(err, data) {       // For duplicate data testing
+        if (err) throw err;
+        ids = data.toString().split(/\r?\n/)
+    });
+}
+catch(e){
+    console.log("Exception occurses : ",e);
+}
 
 
 if(ids.length > 0) {
@@ -112,16 +117,21 @@ function getHeader(id){
 
 // Call Get API to get the lookup records from the server
 function callGetApi(id){
-    needle.get( baseURL+'/items/'+id, getHeader(id), function(error, response) {
-        count--;
-        if (!error && response.statusCode == 200){
-            successRequestCount++;
-            console.log('Response  %d : ',successRequestCount,response.body);
-        }else{
-            failRequestCount++;
-            console.log('error ',response);
-        }
-    });
+    try {
+        needle.get( baseURL+'/items/'+id, getHeader(id), function(error, response) {
+            count--;
+            if (!error && response.statusCode == 200){
+                successRequestCount++;
+                console.log('Response  %d : ',successRequestCount,response.body);
+            }else{
+                failRequestCount++;
+                console.log('error ',response);
+            }
+        });
+    }
+    catch(e){
+        console.log("Exception occurses : ",e);
+    }  
 }
 
 // Summary of processing the API calles and responses
