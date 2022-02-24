@@ -11,18 +11,18 @@
 
 
 // Declarations of constant values
-const apiCallTimer = 1000;
+const apiCallTimer = 300;     // With this 300 milliseconds is best reponse time with the all request processing successfully 
 const baseURL='https://challenges.qluv.io';
 const testDataBaseLocation = '../TestData';
 const testDataFileFormat = 'utf8'
-const maxRequestLimit = 5;
+const maxRequestLimit = 5;    // Max simultanous request limit
 const recordmap = new Map();
 
 // Used needle module for API call
 var needle = require('needle');
 
 // Varible Declaration for the processing
-var count = 0;
+var simultaneousRequestCount = 0;
 var requestCount = 0;
 var successRequestCount = 0;
 var failRequestCount = 0;
@@ -33,20 +33,20 @@ var ids = [ 'cRF2dvDZQsmu37WGgK6MTcL7XjH'];   // Default one value in the id lis
 var fs = require('fs');
 
 try{
-// Taking data from file and add that in collection
-//fs.readFile(testDataBaseLocation+'/uniquInputIds.txt', testDataFileFormat, function(err, data) {    // For unique data testing
-    fs.readFile(testDataBaseLocation+'/inputIds.txt', testDataFileFormat, function(err, data) {       // For duplicate data testing
+    // Taking data from file and add that in collection
+    fs.readFile(testDataBaseLocation+'/uniquInputIds.txt', testDataFileFormat, function(err, data) {    // For unique data testing
+    //fs.readFile(testDataBaseLocation+'/inputIds.txt', testDataFileFormat, function(err, data) {       // For duplicate data testing
         if (err) throw err;
         ids = data.toString().split(/\r?\n/)
     });
 }
-catch(e){
+catch(e){    // Exception control
     console.log("Exception occurses : ",e);
 }
 
 
 if(ids.length > 0) {
-    // First 5 simultaneous requests
+    // First Max Request Limit simultaneous requests
     for(var i = 0; i < maxRequestLimit; i++){
         var id = ids[0];
         if(!recordmap.has(id)){  // Duplicate check
@@ -55,7 +55,7 @@ if(ids.length > 0) {
 
             //remove prcessed record from the list
             ids.splice(recordIndex, 1);
-            count++;
+            simultaneousRequestCount++;
             requestCount++;
     
             // Call API when all the condition full fill
@@ -89,20 +89,19 @@ if(ids.length > 0) {
     
             // break the timer once all the record finish
             clearInterval(interval);
-        }else 
+        }else{
             id=ids[0];    // Taking first id for processing
+            var recordIndex = ids.indexOf(id);  //get index of the prcessed record
 
-    
-        var recordIndex = ids.indexOf(id);  //get index of the prcessed record
-
-        //remove proccessed record from the list
-        ids.splice(recordIndex, 1);
-        if(count < 5 && id != null){
-            if(!recordmap.has(id)){
-                recordmap.set(id);
-                count++;
-                requestCount++; 
-                callGetApi(id);
+            //remove proccessed record from the list
+            ids.splice(recordIndex, 1);
+            if(simultaneousRequestCount < maxRequestLimit && id != null){ // Max Limit 
+                if(!recordmap.has(id)){
+                    recordmap.set(id);
+                    simultaneousRequestCount++;
+                    requestCount++; 
+                    callGetApi(id);
+                }
             }
         }
     }, apiCallTimer);
@@ -119,17 +118,18 @@ function getHeader(id){
 function callGetApi(id){
     try {
         needle.get( baseURL+'/items/'+id, getHeader(id), function(error, response) {
-            count--;
-            if (!error && response.statusCode == 200){
+            simultaneousRequestCount--;
+            if (!error && response.statusCode == 200){    // Sucess Check
                 successRequestCount++;
                 console.log('Response  %d : ',successRequestCount,response.body);
+                console.log('Simultaneous Request Count : ', simultaneousRequestCount + 1);
             }else{
                 failRequestCount++;
                 console.log('error ',response);
             }
         });
     }
-    catch(e){
+    catch(e){  // Exception control
         console.log("Exception occurses : ",e);
     }  
 }
